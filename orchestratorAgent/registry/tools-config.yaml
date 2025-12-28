@@ -1,0 +1,24 @@
+tools:
+  - name: IBTAgent
+    description: Handles insurance benefit and coverage inquiries, for insurance plans it doesnt have any account details or dynamic user data so it cannot answer the account related questions.
+    endpoint: https://ibt-service.internal/api/v1
+
+    capabilities:
+      - benefit inquiries
+      - coverage questions
+      - policy information
+      
+    parameters:
+      required:
+        - userPrompt
+        - userName
+      optional:
+        - policyNumber
+        - memberType
+
+    examples:
+      - prompt: "What are my dental benefits?"
+        reasoning: "User asking about specific benefit coverage"
+
+      - prompt: "Is physical therapy covered?"
+        reasoning: "Coverage inquiry for a specific service"

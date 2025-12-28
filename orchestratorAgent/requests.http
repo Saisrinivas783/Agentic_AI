@@ -1,0 +1,21 @@
+# uvicorn app:app --reload --port 8000
+# added above line for testing purpose
+### Ping
+GET http://localhost:8000/ping
+
+###
+
+### Invocation
+POST http://localhost:8000/invocations
+Content-Type: application/json
+
+{
+  "userPrompt": "what are my dental benefits?",
+  "sessionId": "sess-001",
+  "context": {
+    "userName": "revathi",
+    "userType": "member",
+    "source": "DXAIService",
+    "promptId": "p-123"
+  }
+}
