@@ -34,7 +34,7 @@ class OrchestratorSettings(BaseSettings):
 
     # Bedrock LLM Configuration
     bedrock_model_id: str = Field(
-        default="anthropic.claude-3-sonnet-20240229-v1:0",
+        default="us.anthropic.claude-haiku-4-5-20251001-v1:0",
         description="Default Bedrock model ID"
     )
     bedrock_temperature: float = Field(

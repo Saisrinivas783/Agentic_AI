@@ -5,7 +5,7 @@ from typing import Optional
 from schemas.tools import SelectedTools
 from langchain_core.messages import SystemMessage, HumanMessage
 
-from llm.bedrock_llm_client import make_llm
+from llm.bedrock_llm_client import get_chat_models
 
 logger = logging.getLogger(__name__)
 
@@ -92,16 +92,18 @@ def intent_node(state: OrchestratorState) -> OrchestratorState:
     user_query = state.query
     logger.info(f"Processing intent for query: {user_query}")
 
-    llm = make_llm()
+    chat_models = get_chat_models()
+    llm = chat_models.get_model()
+    logger.info(f"Using model: {llm.model_id}")
 
     # Build tools context from registry
     tools_context = build_tools_context(state.registry)
     logger.info(f"Registry contains {len(state.registry)} tools")
-    
+
     SYSTEM_PROMPT = build_system_prompt(tools_context)
 
-    # Use with_structured_output on the underlying LLM object
-    structured_llm = llm.llm.with_structured_output(ToolSelectionFormat)
+    # Use with_structured_output on the LLM
+    structured_llm = llm.with_structured_output(ToolSelectionFormat)
     
     messages = [
         SystemMessage(content=SYSTEM_PROMPT),
