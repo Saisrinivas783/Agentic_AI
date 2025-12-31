@@ -82,13 +82,12 @@ The project needs reorganization to follow FastAPI best practices:
 ```
 src/
 ├── api/          # HTTP layer (routes, middleware)
-├── core/         # Business logic (orchestrator)
-├── graph/        # LangGraph (workflow, nodes, state)
+├── graph/        # LangGraph - THE core (orchestrator, workflow, nodes, state)
 ├── llm/          # LLM integrations (client, prompts)
 ├── tools/        # Tool registry & executor
 ├── schemas/      # Pydantic models
 ├── config/       # Settings, logging
-└── utils/        # Shared utilities
+└── utils/        # Shared utilities, exceptions
 ```
 
 ### Migration Priority

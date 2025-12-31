@@ -75,13 +75,9 @@ orchestratorAgent/
 │   │       ├── health.py           # GET /ping, GET /health
 │   │       └── invocations.py      # POST /invocations
 │   │
-│   ├── core/                       # Core business logic
+│   ├── graph/                      # LangGraph workflow (THE core)
 │   │   ├── __init__.py
-│   │   ├── orchestrator.py         # OrchestratorAgent class
-│   │   └── exceptions.py           # Custom exceptions
-│   │
-│   ├── graph/                      # LangGraph workflow
-│   │   ├── __init__.py
+│   │   ├── orchestrator.py         # OrchestratorAgent class (graph wrapper)
 │   │   ├── workflow.py             # Graph definition & compilation
 │   │   ├── state.py                # OrchestratorState
 │   │   └── nodes/
@@ -122,6 +118,7 @@ orchestratorAgent/
 │   │
 │   └── utils/                      # Shared utilities
 │       ├── __init__.py
+│       ├── exceptions.py           # Custom exceptions
 │       ├── correlation.py          # Correlation ID handling
 │       └── retry.py                # Retry utilities
 │
@@ -200,28 +197,13 @@ def invoke(
 
 ---
 
-### `src/core/` - Business Logic
+### `src/graph/` - LangGraph Workflow (THE Core)
 
-**Why:** Pure Python business logic, no framework dependencies
-
-| Component | Purpose |
-|-----------|---------|
-| `orchestrator.py` | Main agent class that coordinates everything |
-| `exceptions.py` | Custom exceptions (ToolNotFoundError, LowConfidenceError) |
-
-**Benefits:**
-- Can be tested without FastAPI
-- Can be reused in CLI, background workers, etc.
-- Framework-agnostic
-
----
-
-### `src/graph/` - LangGraph Workflow
-
-**Why:** All LangGraph-specific code in one place
+**Why:** All LangGraph-specific code in one place. The graph IS the business logic.
 
 | Component | Purpose |
 |-----------|---------|
+| `orchestrator.py` | `OrchestratorAgent` class - wrapper around the graph |
 | `workflow.py` | Graph definition, compilation, checkpointer setup |
 | `state.py` | `OrchestratorState` TypedDict with all state fields |
 | `nodes/` | Each node is a separate file for clarity |
@@ -230,6 +212,7 @@ def invoke(
 - Easy to visualize the entire workflow
 - Nodes are pure functions that transform state
 - Graph logic is isolated from API/HTTP concerns
+- `OrchestratorAgent` lives with the graph it wraps
 
 ```python
 # src/graph/workflow.py
@@ -346,7 +329,7 @@ from src.config.settings import get_settings
 |------|--------|----------------|
 | 1 | Create `src/` folder structure | New directories |
 | 2 | Move `app.py` | → `src/api/app.py` + `src/api/routes/` |
-| 3 | Move `agent.py` | → `src/core/orchestrator.py` |
+| 3 | Move `agent.py` | → `src/graph/orchestrator.py` |
 | 4 | Move `settings.py` | → `src/config/settings.py` |
 | 5 | Move `llm/` | → `src/llm/` |
 | 6 | Move `orchestrator/` | → `src/graph/` |
