@@ -1,30 +1,32 @@
+"""Intent analyzer node - LLM-based tool selection."""
+
 import logging
-from typing import Optional
 
 from pydantic import BaseModel, Field
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from src.schemas.state import OrchestratorState
-from src.schemas.tools import SelectedTools
+from src.schemas.tools import SelectedTool
 from src.llm.client import get_chat_models
 
 logger = logging.getLogger(__name__)
 
 
 class ToolSelectionFormat(BaseModel):
-    """Structured output format for LLM tool selection"""
+    """Structured output format for LLM tool selection."""
+
     selected_tool: str = Field(
         description="Name of the selected tool (e.g., 'IBTAgent', 'ClaimsAgent'), 'NO_TOOL' if no suitable tool, or 'CONVERSATIONAL' for greetings/small talk"
     )
     confidence_score: float = Field(
-        description="Confidence score between 0 and 10",
         ge=0.0,
-        le=10.0
+        le=10.0,
+        description="Confidence score between 0 and 10"
     )
     reasoning: str = Field(
         description="Detailed explanation for selection"
     )
-    direct_response: Optional[str] = Field(
+    direct_response: str | None = Field(
         default=None,
         description="For CONVERSATIONAL queries, provide a friendly direct response here"
     )
@@ -127,16 +129,13 @@ def intent_node(state: OrchestratorState) -> OrchestratorState:
     logger.info("========================================")
 
     # Update state with intent results
-    state.intent = parsed.reasoning
-    state.intent_confidence = float(parsed.confidence_score)
+    state.selected_tool = SelectedTool(
+        tool_name=parsed.selected_tool,
+        confidence=parsed.confidence_score,
+        reasoning=parsed.reasoning,
+    )
     state.direct_response = parsed.direct_response
-    selected_tool_obj = SelectedTools(
-            tool_name=parsed.selected_tool,
-            reason=parsed.reasoning,
-            confidence=float(parsed.confidence_score),
-            parameters={}  # Add parameters if needed
-        )
-    state.selected_tools = [selected_tool_obj]
-    logger.info(f"State updated - Intent: {state.intent}, Confidence: {state.intent_confidence}")
-    
+
+    logger.info(f"State updated - Tool: {state.selected_tool.tool_name}, Confidence: {state.selected_tool.confidence}")
+
     return state

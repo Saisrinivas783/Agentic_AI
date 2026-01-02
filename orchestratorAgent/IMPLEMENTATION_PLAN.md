@@ -8,6 +8,62 @@ This document outlines the architectural improvements and implementation roadmap
 
 ## Completed Work (Pre-Phase 1)
 
+### ✅ Project Restructure
+**Status:** COMPLETED | **Date:** 2024-12-31
+
+Reorganized project to proper FastAPI `src/` layout:
+
+| Before | After |
+|--------|-------|
+| `app.py` | `src/api/app.py` + `src/api/routes/` |
+| `agent.py` | `src/graph/orchestrator.py` |
+| `settings.py` | `src/config/settings.py` |
+| `llm/bedrock_llm_client.py` | `src/llm/client.py` |
+| `orchestrator/graph.py` | `src/graph/workflow.py` |
+| `orchestrator/nodes/*.py` | `src/graph/nodes/*.py` (renamed) |
+| `registry/` | `src/tools/` |
+| `schemas/` | `src/schemas/` |
+
+**Files Created:**
+- ✅ `src/api/app.py` - FastAPI app factory
+- ✅ `src/api/routes/health.py` - `/ping` endpoint
+- ✅ `src/api/routes/invocations.py` - `/invocations` endpoint
+- ✅ `src/api/dependencies.py` - Dependency injection
+- ✅ `src/main.py` - Application entry point
+- ✅ `tests/` - Test directory structure
+
+### ✅ Schema Refactoring
+**Status:** COMPLETED | **Date:** 2024-12-31
+
+**`src/schemas/api.py`** - Clean request/response schemas:
+- `BaseWorkflowRequest` - Base with `session_id`
+- `BaseWorkflowResponse` - Base with `success`, `timestamp`, `execution_time_ms`
+- `InvocationRequest` - Matches PDF spec (userPrompt, sessionId, context)
+- `InvocationResponse` - Structured with tool selection and timing
+- `SelectedToolResponse` - Tool info for API response
+
+**`src/schemas/state.py`** - Simplified state (pure data container):
+- `selected_tool` (single) instead of `selected_tools` (list)
+- `tool_result` (single) instead of `tool_results` (list)
+- Removed redundant `intent`/`intent_confidence` fields
+
+**`src/schemas/tools.py`** - Clean tool schemas:
+- `SelectedTool` - tool_name, confidence, reasoning, parameters
+- `ToolResult` - tool_name, success, response, error
+
+### ✅ Node Updates
+**Status:** COMPLETED | **Date:** 2024-12-31
+
+All nodes updated to use simplified state:
+
+| Node | Changes |
+|------|---------|
+| `intent_analyzer.py` | Sets `state.selected_tool` (singular) |
+| `confidence_router.py` | Reads `state.selected_tool`, `CONFIDENCE_THRESHOLD` constant |
+| `tool_executor.py` | Sets `state.tool_result`, `MOCK_RESPONSES` dict |
+| `fallback.py` | `FALLBACK_MESSAGES` dict from spec |
+| `orchestrator.py` | Builds `SelectedToolResponse`, tracks `execution_time_ms` |
+
 ### ✅ Centralized Configuration System
 **Status:** COMPLETED | **Date:** 2024-12-30
 
@@ -61,23 +117,23 @@ llm = chat_models.bedrock_model_with_extended_thinking()  # Extended thinking
 
 ---
 
-## Project Structure Reorganization
+## Project Structure Reorganization ✅
 
-**Full Details:** See [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)
+**Status:** COMPLETED | **Full Details:** See [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)
 
 ### Summary
 
-The project needs reorganization to follow FastAPI best practices:
+The project has been reorganized to follow FastAPI best practices:
 
-| Current | Proposed |
-|---------|----------|
-| Flat root with `app.py`, `agent.py`, `settings.py` | `src/` folder with clear hierarchy |
-| No API layer separation | `src/api/` with routes, dependencies |
-| `orchestrator/` for LangGraph | `src/graph/` with workflow, state, nodes |
-| Scattered config files | `src/config/` centralized |
-| No test organization | `tests/unit/`, `tests/integration/` |
+| Before | After (Completed) |
+|--------|-------------------|
+| Flat root with `app.py`, `agent.py`, `settings.py` | ✅ `src/` folder with clear hierarchy |
+| No API layer separation | ✅ `src/api/` with routes, dependencies |
+| `orchestrator/` for LangGraph | ✅ `src/graph/` with workflow, nodes |
+| Scattered config files | ✅ `src/config/` centralized |
+| No test organization | ✅ `tests/unit/`, `tests/integration/` |
 
-### Key Folders in New Structure
+### Current Structure
 
 ```
 src/
@@ -90,9 +146,9 @@ src/
 └── utils/        # Shared utilities, exceptions
 ```
 
-### Migration Priority
+### Migration Status
 
-This should be done **before Phase 1** to establish clean foundations.
+✅ **COMPLETED** - Clean foundations established. Ready for Phase 1.
 
 ---
 
@@ -868,9 +924,24 @@ redis>=4.5.0
 
 | File | Action | Status |
 |------|--------|--------|
-| `settings.py` | New - Centralized configuration | ✅ Done |
-| `config.py` | Updated - Backwards compatibility layer | ✅ Done |
-| `llm/bedrock_llm_client.py` | Refactored - ChatModels pattern | ✅ Done |
+| `src/` folder structure | New - Complete reorganization | ✅ Done |
+| `src/api/app.py` | New - FastAPI app factory | ✅ Done |
+| `src/api/routes/*.py` | New - Route handlers | ✅ Done |
+| `src/api/dependencies.py` | New - DI container | ✅ Done |
+| `src/main.py` | New - Entry point | ✅ Done |
+| `src/config/settings.py` | Moved - Centralized config | ✅ Done |
+| `src/llm/client.py` | Moved/Renamed - ChatModels | ✅ Done |
+| `src/schemas/api.py` | Updated - Clean request/response | ✅ Done |
+| `src/schemas/state.py` | Simplified - Single tool/result | ✅ Done |
+| `src/schemas/tools.py` | Updated - SelectedTool, ToolResult | ✅ Done |
+| `src/graph/orchestrator.py` | Moved - Builds API response | ✅ Done |
+| `src/graph/workflow.py` | Moved - Graph definition | ✅ Done |
+| `src/graph/nodes/intent_analyzer.py` | Updated - Uses new state | ✅ Done |
+| `src/graph/nodes/confidence_router.py` | Updated - CONFIDENCE_THRESHOLD | ✅ Done |
+| `src/graph/nodes/tool_executor.py` | Updated - MOCK_RESPONSES | ✅ Done |
+| `src/graph/nodes/fallback.py` | Updated - FALLBACK_MESSAGES | ✅ Done |
+| `src/tools/registry.py` | Moved - Tool loader | ✅ Done |
+| `tests/` | New - Test structure | ✅ Done |
 | `requirements.txt` | Added pydantic-settings | ✅ Done |
 | `.env.example` | Updated with all config options | ✅ Done |
 
@@ -879,14 +950,12 @@ redis>=4.5.0
 | File | Action | Phase |
 |------|--------|-------|
 | `requirements.txt` | Add httpx, tenacity | 1 |
-| `orchestrator/graph.py` | Major refactor | 1-3 |
-| `orchestrator/nodes/tool_exec.py` | Rewrite with HTTP client | 1, 3 |
-| `orchestrator/nodes/input_validation.py` | New | 1 |
-| `orchestrator/nodes/guard_rails_router.py` | Update for 3-way routing | 2 |
-| `orchestrator/nodes/clarification_node.py` | New | 2 |
-| `orchestrator/nodes/tool_result_checker.py` | New | 3 |
-| `orchestrator/nodes/response_compose.py` | Activate | 1 |
-| `schemas/state.py` | Expand with new fields | 1-3 |
-| `schemas/tools.py` | Update for multi-tool | 3 |
-| `app.py` | Add middleware | 1 |
-| `agent.py` | Add checkpointing | 2 |
+| `src/graph/workflow.py` | Add input validation node | 1 |
+| `src/graph/nodes/tool_executor.py` | Replace mocks with HTTP client | 1 |
+| `src/graph/nodes/input_validation.py` | New | 1 |
+| `src/graph/nodes/confidence_router.py` | Add 3-way routing (clarification) | 2 |
+| `src/graph/nodes/clarification.py` | New | 2 |
+| `src/graph/nodes/tool_result_checker.py` | New | 3 |
+| `src/schemas/state.py` | Add session/clarification fields | 2-3 |
+| `src/api/app.py` | Add correlation ID middleware | 1 |
+| `src/graph/orchestrator.py` | Add checkpointing | 2 |

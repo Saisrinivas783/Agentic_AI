@@ -1,43 +1,47 @@
+"""Confidence-based routing node."""
+
 import logging
 
 from src.schemas.state import OrchestratorState
 
 logger = logging.getLogger(__name__)
 
+# Minimum confidence required for tool execution
+CONFIDENCE_THRESHOLD = 7.0
+
+
 def guard_rails_router(state: OrchestratorState) -> str:
     """
-    Routes based on tool selection from intent_node
-    
+    Routes based on tool selection confidence.
+
     Routes to:
-    - "execute_tool": For IBTAgent, ClaimsAgent, etc.
-    - "use_fallback": For NO_TOOL, low confidence, or CONVERSATIONAL
+    - "execute_tool": Confidence >= 7.0 and valid tool selected
+    - "use_fallback": NO_TOOL, low confidence, or CONVERSATIONAL
     """
-    confidence = state.intent_confidence or 0.0
-    
-    # selected_tools is a List, get the first one
-    if not state.selected_tools:
-        logger.info("Guard Rails: No tools selected")
+    if not state.selected_tool:
+        logger.info("Guard Rails: No tool selected → use_fallback")
         return "use_fallback"
-    
-    selected_tool = state.selected_tools[0].tool_name
-    
-    logger.info(f"Guard Rails - Tool: {selected_tool}, Confidence: {confidence}")
-    
+
+    tool_name = state.selected_tool.tool_name
+    confidence = state.selected_tool.confidence
+
+    logger.info(f"Guard Rails - Tool: {tool_name}, Confidence: {confidence}")
+
     # Handle conversational queries (greetings, thanks, goodbye)
-    if selected_tool == "CONVERSATIONAL":
-        logger.info("Guard Rails: Conversational query detected → use_fallback")
+    if tool_name == "CONVERSATIONAL":
+        logger.info("Guard Rails: Conversational query → use_fallback")
         return "use_fallback"
-    
-    # Check confidence threshold for tool routing
-    if confidence < 7.0:
-        logger.info(f"Guard Rails: FAILED - Confidence {confidence} below threshold → use_fallback")
-        return "use_fallback"
-    
+
     # Check if tool was found
-    if selected_tool == "NO_TOOL":
-        logger.info("Guard Rails: FAILED - No tool match → use_fallback")
+    if tool_name == "NO_TOOL":
+        logger.info("Guard Rails: No tool match → use_fallback")
         return "use_fallback"
-    
+
+    # Check confidence threshold
+    if confidence < CONFIDENCE_THRESHOLD:
+        logger.info(f"Guard Rails: Confidence {confidence} < {CONFIDENCE_THRESHOLD} → use_fallback")
+        return "use_fallback"
+
     # Route to tool executor
-    logger.info(f"Guard Rails: PASSED - Routing to execute_tool for '{selected_tool}'")
+    logger.info(f"Guard Rails: PASSED → execute_tool ({tool_name})")
     return "execute_tool"

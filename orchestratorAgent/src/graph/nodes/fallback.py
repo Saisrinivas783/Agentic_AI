@@ -1,40 +1,56 @@
+"""Fallback node - handles non-tool responses."""
+
 import logging
 
 from src.schemas.state import OrchestratorState
 
 logger = logging.getLogger(__name__)
 
+# Pre-defined response messages (placeholder text per spec)
+FALLBACK_MESSAGES = {
+    "no_tool_found": "I'm sorry, I couldn't find the right resource to help with your question. Please try rephrasing your query or contact our support team for assistance.",
+    "low_confidence": "I'm not entirely sure I understand your question. Could you please provide more details or rephrase your request?",
+    "service_unavailable": "I'm currently experiencing technical difficulties. Please try again in a few moments or contact support if the issue persists.",
+}
+
+
 def fallback_node(state: OrchestratorState) -> OrchestratorState:
     """
-    Handles fallback scenarios including conversational queries
+    Handles fallback scenarios including conversational queries.
+
+    Routes here when:
+    - CONVERSATIONAL query (greetings, thanks)
+    - NO_TOOL selected
+    - Low confidence score
     """
-    # Get selected tool from selected_tools list
-    selected_tool = state.selected_tools[0].tool_name
-    confidence = state.intent_confidence or 0.0
-    direct_response = state.direct_response
-    
-    logger.info(f"Fallback Node - Tool: {selected_tool}, Confidence: {confidence}")
-    
+    if not state.selected_tool:
+        logger.info("Fallback: No tool in state")
+        state.final_answer = FALLBACK_MESSAGES["service_unavailable"]
+        return state
+
+    tool_name = state.selected_tool.tool_name
+    confidence = state.selected_tool.confidence
+
+    logger.info(f"Fallback - Tool: {tool_name}, Confidence: {confidence}")
+
     # Use LLM's direct response for conversational queries
-    if selected_tool == "CONVERSATIONAL" and direct_response:
-        message = direct_response
-        logger.info(f"Fallback: Conversational response - {message}")
-    
-    # Low confidence
-    elif confidence < 7.0 and confidence > 0:
-        message = "I'm not entirely sure I understand your question. Could you please provide more details?"
-        logger.info(f"Fallback: Low confidence ({confidence})")
-    
+    if tool_name == "CONVERSATIONAL" and state.direct_response:
+        state.final_answer = state.direct_response
+        logger.info("Fallback: Conversational response")
+
     # No tool match
-    elif selected_tool == "NO_TOOL":
-        message = "I'm sorry, I couldn't find the right resource to help with your question. Please try rephrasing or contact support."
-        logger.info(f"Fallback: No tool match")
-    
+    elif tool_name == "NO_TOOL":
+        state.final_answer = FALLBACK_MESSAGES["no_tool_found"]
+        logger.info("Fallback: No tool match")
+
+    # Low confidence
+    elif confidence < 7.0:
+        state.final_answer = FALLBACK_MESSAGES["low_confidence"]
+        logger.info(f"Fallback: Low confidence ({confidence})")
+
     # Generic fallback
     else:
-        message = "I'm currently experiencing technical difficulties. Please try again shortly."
-        logger.info(f"Fallback: Generic fallback")
-    
-    state.final_answer = message
-    
+        state.final_answer = FALLBACK_MESSAGES["service_unavailable"]
+        logger.info("Fallback: Generic")
+
     return state
