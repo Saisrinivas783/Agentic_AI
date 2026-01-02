@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Project Restructure** - Reorganized to proper FastAPI `src/` layout
+  - `src/api/` - FastAPI app, routes, dependencies
+  - `src/config/` - Centralized settings
+  - `src/graph/` - LangGraph workflow and nodes
+  - `src/llm/` - LLM client
+  - `src/schemas/` - Pydantic models
+  - `src/tools/` - Tool registry and definitions
+  - `tests/` - Unit and integration test structure
+
+- **`src/schemas/api.py`** - Clean API request/response schemas
+  - `BaseWorkflowRequest` - Base with `session_id`
+  - `BaseWorkflowResponse` - Base with `success`, `timestamp`, `execution_time_ms`
+  - `InvocationContext` - Context from DXAIService
+  - `InvocationRequest` - Matches PDF spec exactly
+  - `SelectedToolResponse` - Tool selection info for response
+  - `InvocationResponse` - Structured response with timing
+  - `HealthResponse` - For `/ping` endpoint
+
 - **`settings.py`** - New centralized configuration module using `pydantic-settings`
   - Type-safe configuration with validation
   - Environment variable loading with `.env` file support
@@ -35,6 +53,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Testing strategy and migration path
 
 ### Changed
+
+- **`src/schemas/state.py`** - Simplified state as pure data container
+  - `selected_tool` (single `SelectedTool`) instead of `selected_tools` (list)
+  - `tool_result` (single `ToolResult`) instead of `tool_results` (list)
+  - Removed `intent` and `intent_confidence` (now in `selected_tool`)
+  - Clear separation: state holds data, nodes hold logic
+
+- **`src/schemas/tools.py`** - Cleaner tool schemas
+  - `SelectedTool` with `tool_name`, `confidence`, `reasoning`, `parameters`
+  - `ToolResult` with `tool_name`, `success`, `response`, `error`
+
+- **`src/graph/nodes/intent_analyzer.py`** - Updated for new state
+  - Sets `state.selected_tool` (singular) instead of list
+  - Uses `SelectedTool` import
+
+- **`src/graph/nodes/confidence_router.py`** - Cleaner routing logic
+  - Reads from `state.selected_tool`
+  - Added `CONFIDENCE_THRESHOLD = 7.0` constant
+  - Simplified conditional checks
+
+- **`src/graph/nodes/tool_executor.py`** - Simplified executor
+  - Reads from `state.selected_tool`
+  - Sets `state.tool_result` (singular)
+  - `MOCK_RESPONSES` dict for testing
+
+- **`src/graph/nodes/fallback.py`** - Uses spec-defined messages
+  - `FALLBACK_MESSAGES` dict with `no_tool_found`, `low_confidence`, `service_unavailable`
+  - Reads from `state.selected_tool`
+
+- **`src/graph/orchestrator.py`** - Builds structured API response
+  - Creates `SelectedToolResponse` from state
+  - Adds `execution_time_ms` tracking
+  - Uses proper field names (`user_prompt`, `session_id`)
+
+- **File renames for clarity:**
+  - `intent_node.py` → `intent_analyzer.py`
+  - `guard_rails_router.py` → `confidence_router.py`
+  - `tool_exec.py` → `tool_executor.py`
+  - `fallback_node.py` → `fallback.py`
+  - `response_compose.py` → `response_composer.py`
+  - `bedrock_llm_client.py` → `client.py`
 
 - **`llm/bedrock_llm_client.py`** - Complete refactor with `ChatModels` class
   - Now uses `boto3.client` with explicit timeout and retry configuration via `botocore.Config`
