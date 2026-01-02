@@ -64,9 +64,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `SelectedTool` with `tool_name`, `confidence`, `reasoning`, `parameters`
   - `ToolResult` with `tool_name`, `success`, `response`, `error`
 
-- **`src/graph/nodes/intent_analyzer.py`** - Updated for new state
-  - Sets `state.selected_tool` (singular) instead of list
-  - Uses `SelectedTool` import
+- **`src/schemas/llm.py`** - New file for LLM structured output schemas
+  - `ToolSelectionOutput` - Structured output for tool selection
+
+- **`src/llm/prompts/intent_analyzer.py`** - New file for prompt templates
+  - `build_tool_selection_prompt()` - System prompt for tool selection
+  - `build_tools_context()` - Format registry for LLM
+
+- **`src/graph/nodes/intent_analyzer.py`** - Refactored for separation of concerns
+  - Moved `ToolSelectionOutput` to `src/schemas/llm.py`
+  - Moved prompt templates to `src/llm/prompts/intent_analyzer.py`
+  - Node now imports models and prompts from dedicated modules
 
 - **`src/graph/nodes/confidence_router.py`** - Cleaner routing logic
   - Reads from `state.selected_tool`

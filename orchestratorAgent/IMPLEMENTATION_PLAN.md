@@ -58,11 +58,23 @@ All nodes updated to use simplified state:
 
 | Node | Changes |
 |------|---------|
-| `intent_analyzer.py` | Sets `state.selected_tool` (singular) |
+| `intent_analyzer.py` | Imports from `schemas/llm.py` and `llm/prompts/`, sets `state.selected_tool` |
 | `confidence_router.py` | Reads `state.selected_tool`, `CONFIDENCE_THRESHOLD` constant |
 | `tool_executor.py` | Sets `state.tool_result`, `MOCK_RESPONSES` dict |
 | `fallback.py` | `FALLBACK_MESSAGES` dict from spec |
 | `orchestrator.py` | Builds `SelectedToolResponse`, tracks `execution_time_ms` |
+
+### ✅ Code Organization (Best Practices)
+**Status:** COMPLETED | **Date:** 2025-01-02
+
+Separated models and prompts from node logic:
+
+| File | Purpose |
+|------|---------|
+| `src/schemas/llm.py` | LLM structured output schemas (`ToolSelectionOutput`) |
+| `src/llm/prompts/intent_analyzer.py` | Prompt templates for intent analysis |
+
+**Principle:** Nodes contain only orchestration logic. Models live in `schemas/`, prompts in `llm/prompts/`.
 
 ### ✅ Centralized Configuration System
 **Status:** COMPLETED | **Date:** 2024-12-30
@@ -936,7 +948,9 @@ redis>=4.5.0
 | `src/schemas/tools.py` | Updated - SelectedTool, ToolResult | ✅ Done |
 | `src/graph/orchestrator.py` | Moved - Builds API response | ✅ Done |
 | `src/graph/workflow.py` | Moved - Graph definition | ✅ Done |
-| `src/graph/nodes/intent_analyzer.py` | Updated - Uses new state | ✅ Done |
+| `src/schemas/llm.py` | New - LLM output schemas | ✅ Done |
+| `src/llm/prompts/intent_analyzer.py` | New - Prompt templates | ✅ Done |
+| `src/graph/nodes/intent_analyzer.py` | Updated - Imports from schemas/prompts | ✅ Done |
 | `src/graph/nodes/confidence_router.py` | Updated - CONFIDENCE_THRESHOLD | ✅ Done |
 | `src/graph/nodes/tool_executor.py` | Updated - MOCK_RESPONSES | ✅ Done |
 | `src/graph/nodes/fallback.py` | Updated - FALLBACK_MESSAGES | ✅ Done |
