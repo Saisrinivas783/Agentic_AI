@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`src/api/dependencies.py`** - Registry path now configurable via settings
+  - Replaced hardcoded `registry_path` with `settings.registry_path`
+  - Imports `get_settings()` from config module
+  - Allows runtime configuration via environment variable `REGISTRY_PATH`
+
+- **`src/config/settings.py`** - Added registry path configuration
+  - New `registry_path` field with default `src/tools/definitions/tools.yaml`
+  - Configurable via `REGISTRY_PATH` environment variable or `.env` file
+
 ### Added
 
 - **`src/tools/registry.py`** - Production-ready tool registry module

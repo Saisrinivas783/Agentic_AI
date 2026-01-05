@@ -113,6 +113,12 @@ class OrchestratorSettings(BaseSettings):
         description="Logging level (DEBUG, INFO, WARNING, ERROR)"
     )
 
+    # Registry Configuration
+    registry_path: str = Field(
+        default="src/tools/definitions/tools.yaml",
+        description="Path to the tool registry YAML file"
+    )
+
 
 
 @lru_cache

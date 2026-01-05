@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 
+from src.config.settings import get_settings
 from src.graph.orchestrator import OrchestratorAgent
 
 
@@ -12,6 +13,7 @@ def get_orchestrator() -> OrchestratorAgent:
 
     Uses lru_cache to ensure only one instance is created.
     """
+    settings = get_settings()
     return OrchestratorAgent(
-        registry_path="src/tools/definitions/tools.yaml"
+        registry_path=settings.registry_path
     )
