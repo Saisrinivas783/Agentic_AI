@@ -76,6 +76,39 @@ Separated models and prompts from node logic:
 
 **Principle:** Nodes contain only orchestration logic. Models live in `schemas/`, prompts in `llm/prompts/`.
 
+### ✅ Tool Registry Production Hardening
+**Status:** COMPLETED | **Date:** 2025-01-05
+
+Made `src/tools/registry.py` production-ready with comprehensive improvements:
+
+| Feature | Implementation |
+|---------|----------------|
+| Custom Exception | `ToolRegistryError` with proper exception chaining (`from e`) |
+| Pythonic Interface | `__len__`, `__iter__`, `__contains__`, `__repr__` methods |
+| Immutability | `tools` property returns copy to prevent mutation |
+| Factory Methods | `from_local_yaml()` and `from_s3()` class methods |
+| S3 Loading | Fully implemented with boto3 `ClientError`/`BotoCoreError` handling |
+| Logging | Structured logging via `logging.getLogger(__name__)` |
+| Type Hints | Modern Python 3.10+ syntax (`list`, `dict`, `\|`) |
+| Validation | Comprehensive input validation with detailed error messages |
+| Exports | `__all__` for explicit module API |
+
+**Usage:**
+```python
+from src.tools.registry import ToolRegistry, ToolRegistryError
+
+# Local YAML
+registry = ToolRegistry.from_local_yaml("config/tools.yaml")
+
+# S3 (production)
+registry = ToolRegistry.from_s3("bucket", "config/tools.yaml", region_name="us-east-1")
+
+# Pythonic usage
+len(registry)              # Number of tools
+"IBTAgent" in registry     # Check if tool exists
+for tool in registry: ...  # Iterate tools
+```
+
 ### ✅ Centralized Configuration System
 **Status:** COMPLETED | **Date:** 2024-12-30
 
@@ -954,7 +987,7 @@ redis>=4.5.0
 | `src/graph/nodes/confidence_router.py` | Updated - CONFIDENCE_THRESHOLD | ✅ Done |
 | `src/graph/nodes/tool_executor.py` | Updated - MOCK_RESPONSES | ✅ Done |
 | `src/graph/nodes/fallback.py` | Updated - FALLBACK_MESSAGES | ✅ Done |
-| `src/tools/registry.py` | Moved - Tool loader | ✅ Done |
+| `src/tools/registry.py` | Production-ready with S3 support | ✅ Done |
 | `tests/` | New - Test structure | ✅ Done |
 | `requirements.txt` | Added pydantic-settings | ✅ Done |
 | `.env.example` | Updated with all config options | ✅ Done |

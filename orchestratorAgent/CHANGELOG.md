@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`src/tools/registry.py`** - Production-ready tool registry module
+  - Custom `ToolRegistryError` exception with proper exception chaining
+  - `ToolRegistry` class with Pythonic interface (`__len__`, `__iter__`, `__contains__`, `__repr__`)
+  - Immutable `tools` property returning copy to prevent external mutation
+  - New `list_tool_names()` convenience method
+  - Factory methods: `from_local_yaml()` and `from_s3()`
+  - S3 loading fully implemented with boto3 error handling (`ClientError`, `BotoCoreError`)
+  - Structured logging throughout with `logging.getLogger(__name__)`
+  - Modern Python 3.10+ type hints (`list`, `dict`, `|`) via `from __future__ import annotations`
+  - Explicit `encoding="utf-8"` for file operations
+  - `__all__` for explicit module exports
+  - Comprehensive input validation with detailed error messages
+
+### Added
+
 - **Project Restructure** - Reorganized to proper FastAPI `src/` layout
   - `src/api/` - FastAPI app, routes, dependencies
   - `src/config/` - Centralized settings
